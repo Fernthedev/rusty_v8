@@ -22,14 +22,14 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.DENOBOT_PAT }}
+          # token: ${{ secrets.DENOBOT_PAT }}
 
       - uses: denoland/setup-deno@v1
       - uses: dsherret/rust-toolchain-file@v1
 
       - name: Tag and release
         env:
-          GITHUB_TOKEN: ${{ secrets.DENOBOT_PAT }}
+          # GITHUB_TOKEN: ${{ secrets.DENOBOT_PAT }}
           GH_WORKFLOW_ACTOR: ${{ github.actor }}
         run: |
           git config user.email "denobot@users.noreply.github.com"
