@@ -68,9 +68,6 @@ static_assert(
                          sizeof(v8::ScriptCompiler::CompilationDetails)),
     "Source size mismatch");
 
-static_assert(sizeof(v8::FunctionCallbackInfo<v8::Value>) == sizeof(size_t) * 3,
-              "FunctionCallbackInfo size mismatch");
-
 static_assert(sizeof(v8::ReturnValue<v8::Value>) == sizeof(size_t) * 1,
               "ReturnValue size mismatch");
 
@@ -951,9 +948,8 @@ const v8::Boolean* v8__Boolean__New(v8::Isolate* isolate, bool value) {
 
 int v8__FixedArray__Length(const v8::FixedArray& self) { return self.Length(); }
 
-const v8::Data* v8__FixedArray__Get(const v8::FixedArray& self,
-                                    const v8::Context& context, int index) {
-  return local_to_ptr(ptr_to_local(&self)->Get(ptr_to_local(&context), index));
+const v8::Data* v8__FixedArray__Get(const v8::FixedArray& self, int index) {
+  return local_to_ptr(ptr_to_local(&self)->Get(index));
 }
 
 const v8::PrimitiveArray* v8__PrimitiveArray__New(v8::Isolate* isolate,
@@ -1127,33 +1123,16 @@ int v8__String__Utf8Length(const v8::String& self, v8::Isolate* isolate) {
   return self.Utf8LengthV2(isolate);
 }
 
-int v8__String__Write(const v8::String& self, v8::Isolate* isolate,
-                      uint16_t* buffer, int start, int length, int options) {
-  return self.Write(isolate, buffer, start, length, options);
-}
-
 void v8__String__Write_v2(const v8::String& self, v8::Isolate* isolate,
                           uint32_t offset, uint32_t length, uint16_t* buffer,
                           int flags) {
   return self.WriteV2(isolate, offset, length, buffer, flags);
 }
 
-int v8__String__WriteOneByte(const v8::String& self, v8::Isolate* isolate,
-                             uint8_t* buffer, int start, int length,
-                             int options) {
-  return self.WriteOneByte(isolate, buffer, start, length, options);
-}
-
 void v8__String__WriteOneByte_v2(const v8::String& self, v8::Isolate* isolate,
                                  uint32_t offset, uint32_t length,
                                  uint8_t* buffer, int flags) {
   return self.WriteOneByteV2(isolate, offset, length, buffer, flags);
-}
-
-int v8__String__WriteUtf8(const v8::String& self, v8::Isolate* isolate,
-                          char* buffer, int length, int* nchars_ref,
-                          int options) {
-  return self.WriteUtf8(isolate, buffer, length, nchars_ref, options);
 }
 
 size_t v8__String__WriteUtf8_v2(const v8::String& self, v8::Isolate* isolate,
@@ -1476,14 +1455,15 @@ const v8::Value* v8__Object__GetIndex(const v8::Object& self,
       ptr_to_local(&self)->Get(ptr_to_local(&context), index));
 }
 
-void* v8__Object__GetAlignedPointerFromInternalField(const v8::Object& self,
-                                                     int index) {
-  return ptr_to_local(&self)->GetAlignedPointerFromInternalField(index);
+void* v8__Object__GetAlignedPointerFromInternalField(
+    const v8::Object& self, int index, v8::EmbedderDataTypeTag tag) {
+  return ptr_to_local(&self)->GetAlignedPointerFromInternalField(index, tag);
 }
 
 void v8__Object__SetAlignedPointerInInternalField(const v8::Object& self,
-                                                  int index, void* value) {
-  ptr_to_local(&self)->SetAlignedPointerInInternalField(index, value);
+                                                  int index, void* value,
+                                                  v8::EmbedderDataTypeTag tag) {
+  ptr_to_local(&self)->SetAlignedPointerInInternalField(index, value, tag);
 }
 
 bool v8__Object__IsApiWrapper(const v8::Object& self) {
@@ -2017,12 +1997,14 @@ void DeserializeInternalFields(v8::Local<v8::Object> holder, int index,
                                v8::StartupData payload, void* data) {
   assert(data == nullptr);
   if (payload.raw_size == 0) {
-    holder->SetAlignedPointerInInternalField(index, nullptr);
+    holder->SetAlignedPointerInInternalField(index, nullptr,
+                                             v8::kEmbedderDataTypeTagDefault);
     return;
   }
   InternalFieldData* embedder_field = new InternalFieldData{0};
   memcpy(embedder_field, payload.data, payload.raw_size);
-  holder->SetAlignedPointerInInternalField(index, embedder_field);
+  holder->SetAlignedPointerInInternalField(index, embedder_field,
+                                           v8::kEmbedderDataTypeTagDefault);
   deserialized_data.push_back(embedder_field);
 }
 
@@ -2375,13 +2357,45 @@ const v8::ObjectTemplate* v8__FunctionTemplate__InstanceTemplate(
   return local_to_ptr(ptr_to_local(&self)->InstanceTemplate());
 }
 
-const extern int v8__FunctionCallbackInfo__kArgsLength = 6;
-// NOTE(bartlomieju): V8 made this field private in 11.4
-// v8::FunctionCallbackInfo<v8::Value>::kArgsLength;
+v8::Isolate* v8__FunctionCallbackInfo__GetIsolate(
+    const v8::FunctionCallbackInfo<v8::Value>& self) {
+  return self.GetIsolate();
+}
 
 const v8::Value* v8__FunctionCallbackInfo__Data(
     const v8::FunctionCallbackInfo<v8::Value>& self) {
   return local_to_ptr(self.Data());
+}
+
+const v8::Value* v8__FunctionCallbackInfo__NewTarget(
+    const v8::FunctionCallbackInfo<v8::Value>& self) {
+  return local_to_ptr(self.NewTarget());
+}
+
+const v8::Object* v8__FunctionCallbackInfo__This(
+    const v8::FunctionCallbackInfo<v8::Value>& self) {
+  return local_to_ptr(self.This());
+}
+
+const v8::Value* v8__FunctionCallbackInfo__Get(
+    const v8::FunctionCallbackInfo<v8::Value>& self, int index) {
+  return local_to_ptr(self[index]);
+}
+
+int v8__FunctionCallbackInfo__Length(
+    const v8::FunctionCallbackInfo<v8::Value>& self) {
+  return self.Length();
+}
+
+bool v8__FunctionCallbackInfo__IsConstructCall(
+    const v8::FunctionCallbackInfo<v8::Value>& self) {
+  return self.IsConstructCall();
+}
+
+uintptr_t* v8__FunctionCallbackInfo__GetReturnValue(
+    const v8::FunctionCallbackInfo<v8::Value>& self) {
+  v8::ReturnValue<v8::Value> rv = self.GetReturnValue();
+  return *reinterpret_cast<uintptr_t**>(&rv);
 }
 
 v8::Isolate* v8__PropertyCallbackInfo__GetIsolate(
@@ -2392,11 +2406,6 @@ v8::Isolate* v8__PropertyCallbackInfo__GetIsolate(
 const v8::Value* v8__PropertyCallbackInfo__Data(
     const v8::PropertyCallbackInfo<v8::Value>& self) {
   return local_to_ptr(self.Data());
-}
-
-const v8::Object* v8__PropertyCallbackInfo__This(
-    const v8::PropertyCallbackInfo<v8::Value>& self) {
-  return local_to_ptr(self.This());
 }
 
 const v8::Object* v8__PropertyCallbackInfo__Holder(
@@ -2895,7 +2904,8 @@ v8::StartupData SerializeInternalFields(v8::Local<v8::Object> holder, int index,
                                         void* data) {
   assert(data == nullptr);
   InternalFieldData* embedder_field = static_cast<InternalFieldData*>(
-      holder->GetAlignedPointerFromInternalField(index));
+      holder->GetAlignedPointerFromInternalField(
+          index, v8::kEmbedderDataTypeTagDefault));
   if (embedder_field == nullptr) return {nullptr, 0};
   int size = sizeof(*embedder_field);
   char* payload = new char[size];
@@ -3426,13 +3436,20 @@ void v8__WasmStreaming__shared_ptr_DESTRUCT(WasmStreamingSharedPtr* self) {
   self->~WasmStreamingSharedPtr();
 }
 
+void v8__WasmStreaming__SetHasCompiledModuleBytes(
+    WasmStreamingSharedPtr* self) {
+  self->inner->SetHasCompiledModuleBytes();
+}
+
 void v8__WasmStreaming__OnBytesReceived(WasmStreamingSharedPtr* self,
                                         const uint8_t* data, size_t len) {
   self->inner->OnBytesReceived(data, len);
 }
 
-void v8__WasmStreaming__Finish(WasmStreamingSharedPtr* self) {
-  self->inner->Finish();
+void v8__WasmStreaming__Finish(
+    WasmStreamingSharedPtr* self,
+    void (*callback)(v8::WasmStreaming::ModuleCachingInterface&)) {
+  self->inner->Finish(callback);
 }
 
 void v8__WasmStreaming__Abort(WasmStreamingSharedPtr* self,
@@ -3443,6 +3460,19 @@ void v8__WasmStreaming__Abort(WasmStreamingSharedPtr* self,
 void v8__WasmStreaming__SetUrl(WasmStreamingSharedPtr* self, const char* url,
                                size_t len) {
   self->inner->SetUrl(url, len);
+}
+
+const_memory_span_t v8__ModuleCachingInterface__GetWireBytes(
+    const v8::WasmStreaming::ModuleCachingInterface& self) {
+  v8::MemorySpan<const uint8_t> span = self.GetWireBytes();
+  return {span.data(), span.size()};
+}
+
+bool v8__ModuleCachingInterface__SetCachedCompiledModuleBytes(
+    v8::WasmStreaming::ModuleCachingInterface& self,
+    const_memory_span_t bytes) {
+  v8::MemorySpan<const uint8_t> bytes_span{bytes.data, bytes.size};
+  return self.SetCachedCompiledModuleBytes(bytes_span);
 }
 
 const v8::ArrayBuffer* v8__WasmMemoryObject__Buffer(
@@ -3761,6 +3791,80 @@ uint32_t v8__ValueDeserializer__GetWireFormatVersion(
 }
 }  // extern "C"
 
+// v8::WasmModuleCompilation
+
+extern "C" {
+
+v8::WasmModuleCompilation* v8__WasmModuleCompilation__NEW() {
+  return new v8::WasmModuleCompilation();
+}
+
+void v8__WasmModuleCompilation__DELETE(v8::WasmModuleCompilation* self) {
+  delete self;
+}
+
+void v8__WasmModuleCompilation__OnBytesReceived(v8::WasmModuleCompilation* self,
+                                                const uint8_t* bytes,
+                                                size_t size) {
+  self->OnBytesReceived(bytes, size);
+}
+
+void v8__WasmModuleCompilation__Finish(
+    v8::WasmModuleCompilation* self, v8::Isolate* isolate,
+    void (*caching_callback)(v8::WasmStreaming::ModuleCachingInterface&),
+    void (*resolution_callback)(void* data, const v8::WasmModuleObject* module,
+                                const v8::Value* error),
+    void* resolution_data, void (*drop_resolution_data)(void* data)) {
+  // Use shared_ptr to reference-count the Rust closure data through
+  // std::function's copy semantics. The custom deleter calls back into Rust
+  // to drop the boxed closure when the last copy is destroyed.
+  auto shared_data = std::shared_ptr<void>(
+      resolution_data,
+      [drop_resolution_data](void* p) { drop_resolution_data(p); });
+  self->Finish(
+      isolate, caching_callback,
+      [resolution_callback, shared_data](auto result) {
+        if (auto* module =
+                std::get_if<v8::Local<v8::WasmModuleObject>>(&result)) {
+          resolution_callback(shared_data.get(), local_to_ptr(*module),
+                              nullptr);
+        } else {
+          resolution_callback(
+              shared_data.get(), nullptr,
+              local_to_ptr(std::get<v8::Local<v8::Value>>(result)));
+        }
+      });
+}
+
+void v8__WasmModuleCompilation__Abort(v8::WasmModuleCompilation* self) {
+  self->Abort();
+}
+
+void v8__WasmModuleCompilation__SetHasCompiledModuleBytes(
+    v8::WasmModuleCompilation* self) {
+  self->SetHasCompiledModuleBytes();
+}
+
+void v8__WasmModuleCompilation__SetMoreFunctionsCanBeSerializedCallback(
+    v8::WasmModuleCompilation* self,
+    void (*callback)(void* data, v8::CompiledWasmModule* compiled_module),
+    void* data, void (*drop_data)(void* data)) {
+  auto shared_data =
+      std::shared_ptr<void>(data, [drop_data](void* p) { drop_data(p); });
+  self->SetMoreFunctionsCanBeSerializedCallback(
+      [callback, shared_data](v8::CompiledWasmModule module) {
+        auto* heap_module = new v8::CompiledWasmModule(std::move(module));
+        callback(shared_data.get(), heap_module);
+      });
+}
+
+void v8__WasmModuleCompilation__SetUrl(v8::WasmModuleCompilation* self,
+                                       const char* url, size_t length) {
+  self->SetUrl(url, length);
+}
+
+}  // extern "C"
+
 // v8::CompiledWasmModule
 
 extern "C" {
@@ -3806,8 +3910,8 @@ void v8__CompiledWasmModule__DELETE(v8::CompiledWasmModule* self) {
 extern "C" {
 
 size_t icu_get_default_locale(char* output, size_t output_len) {
-  const icu_74::Locale& default_locale = icu::Locale::getDefault();
-  icu_74::CheckedArrayByteSink sink(output, static_cast<uint32_t>(output_len));
+  const icu_77::Locale& default_locale = icu::Locale::getDefault();
+  icu_77::CheckedArrayByteSink sink(output, static_cast<uint32_t>(output_len));
   UErrorCode status = U_ZERO_ERROR;
   default_locale.toLanguageTag(sink, status);
   assert(status == U_ZERO_ERROR);

@@ -222,12 +222,14 @@ fn build_binding() {
     .generate_cstr(true)
     .rustified_enum(".*UseCounterFeature")
     .rustified_enum(".*ModuleImportPhase")
+    .rustified_enum(".*Intercepted")
     .bitfield_enum(".*GCType")
     .bitfield_enum(".*GCCallbackFlags")
     .allowlist_item("v8__.*")
     .allowlist_item("cppgc__.*")
     .allowlist_item("RustObj")
     .allowlist_item("memory_span_t")
+    .allowlist_item("const_memory_span_t")
     .allowlist_item("ExternalConstOneByteStringResource")
     .generate()
     .expect("Unable to generate bindings");
@@ -344,17 +346,28 @@ fn build_v8(is_asan: bool) {
     println!("cargo:warning=Not using sccache or ccache");
   }
 
+  // Use the shared-library-safe TLS mode by default on Linux so downstream
+  // cdylibs can link rusty_v8 archives.
+  let mut has_tls_library_mode_define = false;
   if let Ok(args) = env::var("GN_ARGS") {
     for arg in args.split_whitespace() {
+      if arg.contains("V8_TLS_USED_IN_LIBRARY") {
+        has_tls_library_mode_define = true;
+      }
       gn_args.push(arg.to_string());
     }
+  }
+  if target_os == "linux" && !has_tls_library_mode_define {
+    gn_args.push(r#"extra_cflags=["-DV8_TLS_USED_IN_LIBRARY"]"#.to_string());
   }
   // cross-compilation setup
   if target_arch == "aarch64" {
     gn_args.push(r#"target_cpu="arm64""#.to_string());
-    gn_args.push("use_sysroot=true".to_string());
-    maybe_install_sysroot("arm64");
-    maybe_install_sysroot("amd64");
+    if target_os == "linux" {
+      gn_args.push("use_sysroot=true".to_string());
+      maybe_install_sysroot("arm64");
+      maybe_install_sysroot("amd64");
+    }
   }
   if target_arch == "arm" {
     gn_args.push(r#"target_cpu="arm""#.to_string());
