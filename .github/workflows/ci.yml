@@ -27,25 +27,25 @@ jobs:
         !contains(github.event.pull_request.labels.*.name, 'no-fail-fast') }}
       matrix:
         config:
-          # - os: macos-15-large
-          #   target: x86_64-apple-darwin
-          #   variant: debug
-          #   v8_enable_pointer_compression: false
-          #   cargo: cargo
+          - os: macos-15-large
+            target: x86_64-apple-darwin
+            variant: debug
+            v8_enable_pointer_compression: false
+            cargo: cargo
 
-          - os: macos-15-intel
+          - os: macos-15-large
             target: x86_64-apple-darwin
             variant: release
             v8_enable_pointer_compression: false
             cargo: cargo
 
-          # - os: macos-15-large
-          #   target: x86_64-apple-darwin
-          #   variant: debug
-          #   v8_enable_pointer_compression: true
-          #   cargo: cargo
+          - os: macos-15-large
+            target: x86_64-apple-darwin
+            variant: debug
+            v8_enable_pointer_compression: true
+            cargo: cargo
 
-          - os: macos-15-intel
+          - os: macos-15-large
             target: x86_64-apple-darwin
             variant: release
             v8_enable_pointer_compression: true
@@ -63,11 +63,11 @@ jobs:
             v8_enable_pointer_compression: false
             cargo: cargo
 
-          # - os: macos-15
-          #   target: aarch64-apple-darwin
-          #   variant: debug
-          #   v8_enable_pointer_compression: true
-          #   cargo: cargo
+          - os: macos-15
+            target: aarch64-apple-darwin
+            variant: debug
+            v8_enable_pointer_compression: true
+            cargo: cargo
 
           - os: macos-15
             target: aarch64-apple-darwin
@@ -75,43 +75,43 @@ jobs:
             v8_enable_pointer_compression: true
             cargo: cargo
 
-          # - os: ${{ github.repository == 'Fernthedev/rusty_v8' && 'ubuntu-22.04-xl' || 'ubuntu-22.04' }}
-          #   target: x86_64-unknown-linux-gnu
-          #   variant: debug
-          #   v8_enable_pointer_compression: false
-          #   cargo: cargo
+          - os: ${{ github.repository == 'denoland/rusty_v8' && 'ubuntu-22.04-xl' || 'ubuntu-22.04' }}
+            target: x86_64-unknown-linux-gnu
+            variant: debug
+            v8_enable_pointer_compression: false
+            cargo: cargo
 
-          - os: ${{ github.repository == 'Fernthedev/rusty_v8' && 'ubuntu-22.04-xl' || 'ubuntu-22.04' }}
+          - os: ${{ github.repository == 'denoland/rusty_v8' && 'ubuntu-22.04-xl' || 'ubuntu-22.04' }}
             target: x86_64-unknown-linux-gnu
             variant: release
             v8_enable_pointer_compression: false
             cargo: cargo
 
-          # - os: ${{ github.repository == 'Fernthedev/rusty_v8' && 'ubuntu-22.04-xl' || 'ubuntu-22.04' }}
-          #   target: x86_64-unknown-linux-gnu
-          #   variant: debug
-          #   v8_enable_pointer_compression: true
-          #   cargo: cargo
+          - os: ${{ github.repository == 'denoland/rusty_v8' && 'ubuntu-22.04-xl' || 'ubuntu-22.04' }}
+            target: x86_64-unknown-linux-gnu
+            variant: debug
+            v8_enable_pointer_compression: true
+            cargo: cargo
 
-          - os: ${{ github.repository == 'Fernthedev/rusty_v8' && 'ubuntu-22.04-xl' || 'ubuntu-22.04' }}
+          - os: ${{ github.repository == 'denoland/rusty_v8' && 'ubuntu-22.04-xl' || 'ubuntu-22.04' }}
             target: x86_64-unknown-linux-gnu
             variant: release
             v8_enable_pointer_compression: true
             cargo: cargo
 
-          - os: ${{ github.repository == 'Fernthedev/rusty_v8' && 'windows-2022-xxl' || 'windows-2022' }}
+          - os: ${{ github.repository == 'denoland/rusty_v8' && 'windows-2022-xxl' || 'windows-2022' }}
             target: x86_64-pc-windows-msvc
             variant: release # Note: we do not support windows debug builds.
             v8_enable_pointer_compression: false
             cargo: cargo
 
-          # - os: ${{ github.repository == 'Fernthedev/rusty_v8' && 'ubuntu-22.04-xl' || 'ubuntu-22.04' }}
-          #   target: aarch64-unknown-linux-gnu
-          #   variant: debug
-          #   v8_enable_pointer_compression: false
-          #   cargo: cargo
+          - os: ${{ github.repository == 'denoland/rusty_v8' && 'ubuntu-22.04-xl' || 'ubuntu-22.04' }}
+            target: aarch64-unknown-linux-gnu
+            variant: debug
+            v8_enable_pointer_compression: false
+            cargo: cargo
 
-          - os: ${{ github.repository == 'Fernthedev/rusty_v8' && 'ubuntu-22.04-xl' || 'ubuntu-22.04' }}
+          - os: ${{ github.repository == 'denoland/rusty_v8' && 'ubuntu-22.04-xl' || 'ubuntu-22.04' }}
             target: aarch64-unknown-linux-gnu
             variant: release
             v8_enable_pointer_compression: false
@@ -218,7 +218,7 @@ jobs:
           curl https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo dd of=/etc/apt/trusted.gpg.d/llvm-snapshot.gpg
           sudo apt-get update
           sudo apt-get -qq remove 'clang-*'
-          sudo apt-get install lld-19 clang-19 clang-tools-19 clang-tidy-19 clang-format-19 libclang-19-dev llvm-19 -y
+          sudo apt-get install lld-19 clang-19 clang-tools-19 clang-tidy-19 clang-format-19 libclang-19-dev -y
           echo "LIBCLANG_PATH=/usr/lib/llvm-19/lib" >> $GITHUB_ENV
 
       - name: check rust code formatting
@@ -485,29 +485,29 @@ jobs:
       - name: Configure git
         run: git config --global core.symlinks true
 
-  #     - name: Clone repository
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 10
-  #         submodules: recursive
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 10
+          submodules: recursive
 
-  #     - name: Install rust
-  #       uses: dsherret/rust-toolchain-file@v1
+      - name: Install rust
+        uses: dsherret/rust-toolchain-file@v1
 
-  #     - name: Install python
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: 3.11.x
-  #         architecture: x64
+      - name: Install python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11.x
+          architecture: x64
 
-  #     - name: Download CI artifacts
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         path: gen
-  #         pattern: src_binding_*.rs
-  #         merge-multiple: true
+      - name: Download CI artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: gen
+          pattern: src_binding_*.rs
+          merge-multiple: true
 
-  #     - name: Publish
-  #       env:
-  #         CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-  #       run: cargo publish -vv --locked --allow-dirty
+      - name: Publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -vv --locked --allow-dirty
